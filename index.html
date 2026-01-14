@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Discounting Game | FBE 466</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --usc-cardinal: #990000;
+            --usc-gold: #FFCC00;
+            --usc-cardinal-dark: #6B0000;
+            --usc-gold-light: #FFE066;
+            --success: #22C55E;
+            --error: #EF4444;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --text-light: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0f0f23 100%);
+            min-height: 100vh;
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(153, 0, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 204, 0, 0.05) 0%, transparent 50%);
+            animation: bgPulse 15s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-2%, -2%) rotate(1deg); }
+        }
+
+        .header {
+            background: linear-gradient(90deg, var(--usc-cardinal) 0%, var(--usc-cardinal-dark) 100%);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--usc-gold);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--usc-gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--usc-cardinal);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+        }
+
+        .logo-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-subtext {
+            font-size: 0.7rem;
+            color: var(--usc-gold);
+            letter-spacing: 1px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: var(--usc-gold);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            background: linear-gradient(135deg, var(--usc-gold) 0%, var(--usc-gold-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: 4px;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.7;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, var(--usc-gold) 0%, var(--usc-gold-light) 100%);
+            color: var(--usc-cardinal-dark);
+            border: none;
+            padding: 1.2rem 3rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 204, 0, 0.4);
+        }
+
+        .game-map {
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .map-container {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 204, 0, 0.1);
+        }
+
+        .map-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: var(--usc-gold);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .levels-track {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .track-line {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            z-index: 0;
+        }
+
+        .track-progress {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--usc-gold), var(--usc-gold-light));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            z-index: 1;
+        }
+
+        .level-node {
+            position: relative;
+            z-index: 2;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-dark);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .level-node.completed {
+            background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+            border-color: var(--success);
+        }
+
+        .level-node.current {
+            background: linear-gradient(135deg, var(--usc-gold) 0%, var(--usc-gold-light) 100%);
+            border-color: var(--usc-gold);
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 30px rgba(255, 204, 0, 0.5);
+        }
+
+        .level-node.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .level-node.current .level-number,
+        .level-node.current .level-icon {
+            color: var(--usc-cardinal-dark);
+        }
+
+        .level-icon {
+            font-size: 1.3rem;
+        }
+
+        .level-name {
+            position: absolute;
+            bottom: -28px;
+            font-size: 0.6rem;
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-align: center;
+            max-width: 90px;
+            line-height: 1.3;
+        }
+
+        .question-area {
+            display: none;
+        }
+
+        .question-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 204, 0, 0.1);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, var(--usc-cardinal) 0%, var(--usc-cardinal-dark) 100%);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-badge-icon {
+            font-size: 1.1rem;
+        }
+
+        .level-badge-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .question-counter {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .scenario-box {
+            background: rgba(153, 0, 0, 0.1);
+            border-left: 4px solid var(--usc-cardinal);
+            padding: 1.5rem;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 2rem;
+        }
+
+        .scenario-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--usc-gold);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .scenario-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .property-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .property-stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .property-stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            color: var(--usc-gold);
+        }
+
+        .property-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: var(--usc-gold-light);
+        }
+
+        .answer-section {
+            margin-bottom: 2rem;
+        }
+
+        .choices-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .choice-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            color: var(--text-light);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .choice-btn:hover:not(.disabled) {
+            border-color: var(--usc-gold);
+            background: rgba(255, 204, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .choice-btn.selected {
+            border-color: var(--usc-gold);
+            background: rgba(255, 204, 0, 0.2);
+        }
+
+        .choice-btn.correct {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .choice-btn.incorrect {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .choice-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .choice-letter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            margin-right: 0.75rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .number-input-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .number-input {
+            flex: 1;
+            max-width: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: var(--usc-gold);
+        }
+
+        .input-prefix {
+            font-size: 1.5rem;
+            color: var(--usc-gold);
+            font-weight: 600;
+        }
+
+        .input-suffix {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, var(--usc-cardinal) 0%, var(--usc-cardinal-dark) 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(153, 0, 0, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .feedback-section {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .feedback-section.correct {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .feedback-section.incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .feedback-icon {
+            font-size: 2rem;
+        }
+
+        .feedback-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .feedback-section.correct .feedback-title { color: var(--success); }
+        .feedback-section.incorrect .feedback-title { color: var(--error); }
+
+        .feedback-explanation {
+            line-height: 1.7;
+            color: var(--text-light);
+        }
+
+        .feedback-explanation strong {
+            color: var(--usc-gold);
+        }
+
+        .next-btn {
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, var(--usc-gold) 0%, var(--usc-gold-light) 100%);
+            color: var(--usc-cardinal-dark);
+            border: none;
+            padding: 1rem 2rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 204, 0, 0.3);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--usc-gold);
+            animation: scaleIn 0.4s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--usc-gold) 0%, var(--usc-gold-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: 3px;
+        }
+
+        .modal-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .modal-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .modal-stat { text-align: center; }
+
+        .modal-stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: var(--usc-gold);
+        }
+
+        .modal-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, var(--usc-cardinal) 0%, var(--usc-cardinal-dark) 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(153, 0, 0, 0.3);
+        }
+
+        .trophy-animation {
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confettiFall 3s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(-100vh) rotate(0deg); }
+            100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+        }
+
+        .progress-container { width: 200px; }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--usc-gold), var(--usc-gold-light));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            text-align: center;
+        }
+
+        /* Student Login Modal */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 400px;
+            max-width: 90vw;
+            border: 1px solid rgba(255, 204, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .login-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: var(--usc-gold);
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .login-subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .login-input-group {
+            text-align: left;
+        }
+
+        .login-input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--usc-gold);
+        }
+
+        .login-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .login-btn {
+            margin-top: 1rem;
+            background: linear-gradient(135deg, var(--usc-cardinal) 0%, var(--usc-cardinal-dark) 100%);
+            border: none;
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(153, 0, 0, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-privacy {
+            margin-top: 1.5rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 1rem; padding: 1rem; }
+            .welcome-title { font-size: 2.5rem; }
+            .choices-grid { grid-template-columns: 1fr; }
+            .level-node { width: 45px; height: 45px; }
+            .level-name { display: none; }
+            .question-card { padding: 1.5rem; }
+            .property-info { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Student Login Modal -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-modal">
+            <div class="login-logo">THE DISCOUNTING GAME</div>
+            <div class="login-subtitle">FBE 466 | Spring 2026</div>
+            <div class="login-form">
+                <div class="login-input-group">
+                    <label for="studentName">Your Name</label>
+                    <input type="text" id="studentName" class="login-input" placeholder="e.g., John Smith" required>
+                </div>
+                <button class="login-btn" onclick="submitLogin()" id="loginBtn">Start Playing</button>
+            </div>
+            <div class="login-privacy">
+                Your responses will be recorded to help track your progress and improve the learning experience.
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-animation"></div>
+
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">t</div>
+            <div>
+                <div class="logo-text">THE DISCOUNTING GAME</div>
+                <div class="logo-subtext">FBE 466 | Time Value of Money</div>
+            </div>
+        </div>
+        <div class="stats-bar" id="statsBar" style="display: none;">
+            <div class="stat">
+                <div class="stat-value" id="scoreValue">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="streakValue">0</div>
+                <div class="stat-label">Streak</div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">Level 1 of 6</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="welcome-screen" id="welcomeScreen">
+            <h1 class="welcome-title">THE DISCOUNTING GAME</h1>
+            <p class="welcome-subtitle">
+                Master the time value of money as you journey through Los Angeles commercial real estate markets.
+                From Downtown to Beverly Hills, each neighborhood brings new challenges in present value,
+                future value, and investment analysis.
+            </p>
+            <button class="start-btn" onclick="startGame()">BEGIN</button>
+        </div>
+
+        <div class="game-map" id="gameMap">
+            <div class="map-container">
+                <div class="map-title">YOUR LA INVESTMENT JOURNEY</div>
+                <div class="levels-track">
+                    <div class="track-line"></div>
+                    <div class="track-progress" id="trackProgress"></div>
+                    <div class="level-node current" id="level1" onclick="selectLevel(1)">
+                        <span class="level-icon">1</span>
+                        <span class="level-name">Downtown</span>
+                    </div>
+                    <div class="level-node locked" id="level2" onclick="selectLevel(2)">
+                        <span class="level-number">2</span>
+                        <span class="level-name">Arts District</span>
+                    </div>
+                    <div class="level-node locked" id="level3" onclick="selectLevel(3)">
+                        <span class="level-number">3</span>
+                        <span class="level-name">Hollywood</span>
+                    </div>
+                    <div class="level-node locked" id="level4" onclick="selectLevel(4)">
+                        <span class="level-number">4</span>
+                        <span class="level-name">Century City</span>
+                    </div>
+                    <div class="level-node locked" id="level5" onclick="selectLevel(5)">
+                        <span class="level-number">5</span>
+                        <span class="level-name">Santa Monica</span>
+                    </div>
+                    <div class="level-node locked" id="level6" onclick="selectLevel(6)">
+                        <span class="level-number">6</span>
+                        <span class="level-name">Beverly Hills</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-area" id="questionArea">
+            <div class="question-card">
+                <div class="question-header">
+                    <div class="level-badge">
+                        <span class="level-badge-icon" id="levelIcon"></span>
+                        <span class="level-badge-text" id="levelName">LEVEL 1</span>
+                    </div>
+                    <div class="question-counter" id="questionCounter">Question 1 of 4</div>
+                </div>
+                <div class="scenario-box">
+                    <div class="scenario-label">Scenario</div>
+                    <div class="scenario-text" id="scenarioText">Loading scenario...</div>
+                </div>
+                <div class="property-info" id="propertyInfo"></div>
+                <div class="question-text" id="questionText">Loading question...</div>
+                <div class="answer-section" id="answerSection"></div>
+                <button class="submit-btn" id="submitBtn" onclick="submitAnswer()">CHECK ANSWER</button>
+                <div class="feedback-section" id="feedbackSection">
+                    <div class="feedback-header">
+                        <span class="feedback-icon" id="feedbackIcon"></span>
+                        <span class="feedback-title" id="feedbackTitle"></span>
+                    </div>
+                    <div class="feedback-explanation" id="feedbackExplanation"></div>
+                    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">CONTINUE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="levelCompleteModal">
+        <div class="modal-content">
+            <div class="modal-icon">&#10003;</div>
+            <div class="modal-title" id="modalTitle">LEVEL COMPLETE</div>
+            <div class="modal-subtitle" id="modalSubtitle">Ready for the next neighborhood?</div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalCorrect">3/4</div>
+                    <div class="modal-stat-label">Correct</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalPoints">+300</div>
+                    <div class="modal-stat-label">Points</div>
+                </div>
+            </div>
+            <button class="modal-btn" onclick="continueToNextLevel()">CONTINUE</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="gameCompleteModal">
+        <div class="modal-content">
+            <div class="modal-icon trophy-animation">&#9733;</div>
+            <div class="modal-title">LA CONQUERED</div>
+            <div class="modal-subtitle">You've mastered the time value of money across all of Los Angeles.</div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="finalScore">0</div>
+                    <div class="modal-stat-label">Total Score</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="finalAccuracy">0%</div>
+                    <div class="modal-stat-label">Accuracy</div>
+                </div>
+            </div>
+            <button class="modal-btn" onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // ANALYTICS CONFIGURATION
+        // =====================================================
+        // IMPORTANT: Replace this URL with your Google Apps Script Web App URL
+        // See instructions at the bottom of this file for setup
+        const ANALYTICS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwuJj7DKWj67YOMjEgb8N99GuBRWrNcz0lop_K8CFykL0Pbw-KyZISPhi3o0gQ7j1EZ/exec';
+
+        // Analytics State
+        let analytics = {
+            sessionId: generateSessionId(),
+            studentName: '',
+            sessionStart: new Date().toISOString(),
+            events: [],
+            questionStartTime: null
+        };
+
+        function generateSessionId() {
+            return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function submitLogin() {
+            const name = document.getElementById('studentName').value.trim();
+
+            if (!name) {
+                alert('Please enter your name to continue.');
+                return;
+            }
+
+            analytics.studentName = name;
+
+            // Log session start
+            logEvent('session_start', {
+                studentName: analytics.studentName
+            });
+
+            // Hide login, show game
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+
+        function logEvent(eventType, data = {}) {
+            const event = {
+                timestamp: new Date().toISOString(),
+                eventType: eventType,
+                sessionId: analytics.sessionId,
+                studentName: analytics.studentName,
+                ...data
+            };
+
+            analytics.events.push(event);
+
+            // Send to Google Sheets (non-blocking)
+            sendToAnalytics(event);
+        }
+
+        function sendToAnalytics(event) {
+            // Don't send if endpoint not configured
+            if (ANALYTICS_ENDPOINT === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                console.log('Analytics event (endpoint not configured):', event);
+                return;
+            }
+
+            // Send via fetch (fire and forget)
+            fetch(ANALYTICS_ENDPOINT, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(event)
+            }).catch(err => {
+                console.log('Analytics send failed (non-critical):', err);
+            });
+        }
+
+        function logQuestionStart() {
+            analytics.questionStartTime = Date.now();
+        }
+
+        function logQuestionAnswer(question, userAnswer, correctAnswer, isCorrect, level) {
+            const timeSpent = analytics.questionStartTime
+                ? Math.round((Date.now() - analytics.questionStartTime) / 1000)
+                : 0;
+
+            logEvent('question_answered', {
+                level: level,
+                levelName: levels[level - 1]?.name || 'Unknown',
+                questionText: question.question,
+                questionType: question.type,
+                userAnswer: String(userAnswer),
+                correctAnswer: String(correctAnswer),
+                isCorrect: isCorrect,
+                timeSpentSeconds: timeSpent,
+                currentScore: gameState.score,
+                currentStreak: gameState.streak
+            });
+        }
+
+        function logLevelComplete(level, correct, total) {
+            logEvent('level_complete', {
+                level: level,
+                levelName: levels[level - 1]?.name || 'Unknown',
+                questionsCorrect: correct,
+                questionsTotal: total,
+                accuracy: Math.round((correct / total) * 100),
+                totalScore: gameState.score
+            });
+        }
+
+        function logGameComplete() {
+            logEvent('game_complete', {
+                finalScore: gameState.score,
+                totalCorrect: gameState.correctAnswers,
+                totalQuestions: gameState.totalQuestions,
+                accuracy: Math.round((gameState.correctAnswers / gameState.totalQuestions) * 100),
+                levelsCompleted: gameState.levelsCompleted.length
+            });
+        }
+
+        // Track when user leaves the page
+        window.addEventListener('beforeunload', function() {
+            if (analytics.studentName && gameState.totalQuestions > 0) {
+                logEvent('session_end', {
+                    reason: 'page_closed',
+                    highestLevel: gameState.currentLevel,
+                    finalScore: gameState.score,
+                    totalCorrect: gameState.correctAnswers,
+                    totalQuestions: gameState.totalQuestions,
+                    completed: gameState.levelsCompleted.length === 6
+                });
+            }
+        });
+
+        // =====================================================
+        // GAME STATE
+        // =====================================================
+        let gameState = {
+            currentLevel: 1,
+            currentQuestion: 0,
+            score: 0,
+            streak: 0,
+            correctAnswers: 0,
+            totalQuestions: 0,
+            levelCorrect: 0,
+            levelsCompleted: [],
+            currentLevelQuestions: []
+        };
+
+        // Level definitions with LA neighborhoods
+        const levels = [
+            { id: 1, name: "DOWNTOWN", icon: "🏢", location: "Downtown LA", topic: "Single-Period Discounting" },
+            { id: 2, name: "ARTS DISTRICT", icon: "🎨", location: "Arts District", topic: "Multi-Period Compounding" },
+            { id: 3, name: "HOLLYWOOD", icon: "⭐", location: "Hollywood", topic: "Effective vs Nominal Rates" },
+            { id: 4, name: "CENTURY CITY", icon: "🏙️", location: "Century City", topic: "Level Annuities" },
+            { id: 5, name: "SANTA MONICA", icon: "🌊", location: "Santa Monica", topic: "Growth Annuities & Perpetuities" },
+            { id: 6, name: "BEVERLY HILLS", icon: "💎", location: "Beverly Hills", topic: "DCF & IRR Analysis" }
+        ];
+
+        // Question templates with randomizable values
+        const questionTemplates = {
+            1: [ // Level 1: Single-Period Discounting
+                {
+                    generate: () => {
+                        const noi = randomChoice([80000, 100000, 120000, 150000, 200000]);
+                        const growth = randomChoice([2, 3, 4, 5]);
+                        const answer = Math.round(noi * (1 + growth/100));
+                        return {
+                            scenario: `You are analyzing a Class A office building in Downtown LA near the US Bank Tower. The property generates $${noi.toLocaleString()} in net operating income (NOI) this year.`,
+                            propertyInfo: [
+                                { label: "Current NOI", value: `$${noi.toLocaleString()}` },
+                                { label: "Expected Growth", value: `${growth}% annually` }
+                            ],
+                            question: `If NOI is expected to grow by ${growth}% annually, what will the NOI be one year from now?`,
+                            type: "number",
+                            correctAnswer: answer,
+                            tolerance: 0,
+                            prefix: "$",
+                            explanation: `Future Value after one period:<br><br><strong>FV = PV × (1 + g)</strong><br><br>FV = $${noi.toLocaleString()} × (1 + ${(growth/100).toFixed(2)}) = $${noi.toLocaleString()} × ${(1 + growth/100).toFixed(2)} = <strong>$${answer.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const fv = randomChoice([55000, 66000, 77000, 88000, 99000, 110000]);
+                        const rate = randomChoice([8, 10, 12]);
+                        const pv = Math.round(fv / (1 + rate/100));
+                        return {
+                            scenario: `An investor is selling a warehouse in Downtown LA. You will receive $${fv.toLocaleString()} exactly one year from now when the deal closes.`,
+                            propertyInfo: [
+                                { label: "Future Payment", value: `$${fv.toLocaleString()}` },
+                                { label: "Time Until Payment", value: "1 year" },
+                                { label: "Discount Rate", value: `${rate}%` }
+                            ],
+                            question: `Using a ${rate}% discount rate, what is the present value of this payment?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 1,
+                            prefix: "$",
+                            explanation: `Present Value for one period:<br><br><strong>PV = FV / (1 + r)</strong><br><br>PV = $${fv.toLocaleString()} / (1 + ${(rate/100).toFixed(2)}) = $${fv.toLocaleString()} / ${(1 + rate/100).toFixed(2)} = <strong>$${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const todayOption = randomChoice([40000, 44000, 48000, 52000]);
+                        const futureOption = randomChoice([50000, 55000, 60000, 65000]);
+                        const rate = randomChoice([6, 8, 10, 12]);
+                        const pv = Math.round(futureOption / (1 + rate/100));
+                        const better = pv > todayOption ? "waiting" : "taking the money today";
+                        return {
+                            scenario: `You have the option to receive $${todayOption.toLocaleString()} today OR $${futureOption.toLocaleString()} one year from now from a commercial property sale.`,
+                            propertyInfo: [
+                                { label: "Option A", value: `$${todayOption.toLocaleString()} today` },
+                                { label: "Option B", value: `$${futureOption.toLocaleString()} in 1 year` },
+                                { label: "Required Return", value: `${rate}%` }
+                            ],
+                            question: `With a ${rate}% required return, what is the present value of the $${futureOption.toLocaleString()} future payment?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 5,
+                            prefix: "$",
+                            explanation: `<strong>PV = $${futureOption.toLocaleString()} / (1 + ${(rate/100).toFixed(2)}) = $${futureOption.toLocaleString()} / ${(1 + rate/100).toFixed(2)} = $${pv.toLocaleString()}</strong><br><br>Since $${pv.toLocaleString()} ${pv > todayOption ? '>' : '<'} $${todayOption.toLocaleString()}, ${better} is the better choice.`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const rent = randomChoice([40000, 50000, 60000, 75000, 80000]);
+                        const increase = randomChoice([3, 4, 5, 6]);
+                        const answer = Math.round(rent * (1 + increase/100));
+                        return {
+                            scenario: `A retail property in the Financial District has a current annual rent of $${rent.toLocaleString()} with scheduled annual increases.`,
+                            propertyInfo: [
+                                { label: "Current Rent", value: `$${rent.toLocaleString()}` },
+                                { label: "Annual Increase", value: `${increase}%` }
+                            ],
+                            question: `What will the annual rent be after one year?`,
+                            type: "number",
+                            correctAnswer: answer,
+                            tolerance: 0,
+                            prefix: "$",
+                            explanation: `<strong>Future Rent = Current Rent × (1 + increase)</strong><br><br>$${rent.toLocaleString()} × ${(1 + increase/100).toFixed(2)} = <strong>$${answer.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const fv = randomChoice([100000, 150000, 200000, 250000]);
+                        const rate = randomChoice([5, 6, 8, 10]);
+                        const pv = Math.round(fv / (1 + rate/100));
+                        const choices = generateChoices(pv, "$");
+                        return {
+                            scenario: `A tenant will pay a $${fv.toLocaleString()} lease termination fee exactly one year from now.`,
+                            propertyInfo: [
+                                { label: "Future Payment", value: `$${fv.toLocaleString()}` },
+                                { label: "Time", value: "1 year" },
+                                { label: "Discount Rate", value: `${rate}%` }
+                            ],
+                            question: `What is the present value of this termination fee?`,
+                            type: "multiple-choice",
+                            choices: choices.options,
+                            correctAnswer: choices.correctIndex,
+                            explanation: `<strong>PV = FV / (1 + r) = $${fv.toLocaleString()} / ${(1 + rate/100).toFixed(2)} = $${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const pv = randomChoice([500000, 750000, 1000000, 1500000]);
+                        const rate = randomChoice([6, 8, 10, 12]);
+                        const fv = Math.round(pv * (1 + rate/100));
+                        return {
+                            scenario: `You invest $${pv.toLocaleString()} in a Downtown LA parking structure. Your expected return is ${rate}% per year.`,
+                            propertyInfo: [
+                                { label: "Investment", value: `$${pv.toLocaleString()}` },
+                                { label: "Expected Return", value: `${rate}%` },
+                                { label: "Time", value: "1 year" }
+                            ],
+                            question: `What will your investment be worth in one year?`,
+                            type: "number",
+                            correctAnswer: fv,
+                            tolerance: 0,
+                            prefix: "$",
+                            explanation: `<strong>FV = PV × (1 + r) = $${pv.toLocaleString()} × ${(1 + rate/100).toFixed(2)} = $${fv.toLocaleString()}</strong>`
+                        };
+                    }
+                }
+            ],
+            2: [ // Level 2: Multi-Period Compounding
+                {
+                    generate: () => {
+                        const noi = randomChoice([150000, 200000, 250000, 300000]);
+                        const growth = randomChoice([3, 4, 5, 6]);
+                        const years = randomChoice([2, 3]);
+                        const answer = Math.round(noi * Math.pow(1 + growth/100, years));
+                        return {
+                            scenario: `A Class A office property in the Arts District generates $${noi.toLocaleString()} NOI this year with strong fundamentals driving growth.`,
+                            propertyInfo: [
+                                { label: "Current NOI", value: `$${noi.toLocaleString()}` },
+                                { label: "Annual Growth", value: `${growth}%` },
+                                { label: "Time Horizon", value: `${years} years` }
+                            ],
+                            question: `What will the NOI be ${years} years from now with ${growth}% annual compounded growth?`,
+                            type: "number",
+                            correctAnswer: answer,
+                            tolerance: 10,
+                            prefix: "$",
+                            explanation: `<strong>FV = PV × (1 + g)^n</strong><br><br>FV = $${noi.toLocaleString()} × (${(1 + growth/100).toFixed(2)})^${years} = $${noi.toLocaleString()} × ${Math.pow(1 + growth/100, years).toFixed(4)} = <strong>$${answer.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const fv = randomChoice([121000, 133100, 146410, 161051]);
+                        const rate = 10;
+                        const years = randomChoice([2, 3, 4, 5]);
+                        const pv = Math.round(fv / Math.pow(1.10, years));
+                        return {
+                            scenario: `You will receive $${fv.toLocaleString()} from the sale of an Arts District creative office building in ${years} years.`,
+                            propertyInfo: [
+                                { label: "Future Payment", value: `$${fv.toLocaleString()}` },
+                                { label: "Time", value: `${years} years` },
+                                { label: "Discount Rate", value: `${rate}%` }
+                            ],
+                            question: `What is the present value of this payment?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 10,
+                            prefix: "$",
+                            explanation: `<strong>PV = FV / (1 + r)^n</strong><br><br>PV = $${fv.toLocaleString()} / (1.10)^${years} = $${fv.toLocaleString()} / ${Math.pow(1.10, years).toFixed(4)} = <strong>$${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const principal = randomChoice([10000, 25000, 50000, 100000]);
+                        const rate = randomChoice([8, 10, 12]);
+                        const years = 3;
+                        const simple = Math.round(principal * (1 + rate/100 * years));
+                        const compound = Math.round(principal * Math.pow(1 + rate/100, years));
+                        const diff = compound - simple;
+                        return {
+                            scenario: `You invest $${principal.toLocaleString()} in a real estate fund at ${rate}% annual interest for ${years} years.`,
+                            propertyInfo: [
+                                { label: "Investment", value: `$${principal.toLocaleString()}` },
+                                { label: "Annual Rate", value: `${rate}%` },
+                                { label: "Time", value: `${years} years` }
+                            ],
+                            question: `What is the difference between compound interest and simple interest after ${years} years?`,
+                            type: "number",
+                            correctAnswer: diff,
+                            tolerance: 5,
+                            prefix: "$",
+                            explanation: `Simple: $${principal.toLocaleString()} × (1 + ${rate/100} × ${years}) = $${simple.toLocaleString()}<br><br>Compound: $${principal.toLocaleString()} × (${(1 + rate/100).toFixed(2)})^${years} = $${compound.toLocaleString()}<br><br><strong>Difference = $${compound.toLocaleString()} - $${simple.toLocaleString()} = $${diff.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const fv = randomChoice([400000, 500000, 600000, 750000]);
+                        const rate = randomChoice([6, 8, 10]);
+                        const years = randomChoice([3, 4, 5]);
+                        const pv = Math.round(fv / Math.pow(1 + rate/100, years));
+                        const choices = generateChoices(pv, "$");
+                        return {
+                            scenario: `A converted warehouse in the Arts District will be sold for an estimated $${fv.toLocaleString()} in ${years} years.`,
+                            propertyInfo: [
+                                { label: "Future Sale", value: `$${fv.toLocaleString()}` },
+                                { label: "Time", value: `${years} years` },
+                                { label: "Discount Rate", value: `${rate}%` }
+                            ],
+                            question: `What is the present value of this future sale?`,
+                            type: "multiple-choice",
+                            choices: choices.options,
+                            correctAnswer: choices.correctIndex,
+                            explanation: `<strong>PV = $${fv.toLocaleString()} / (${(1 + rate/100).toFixed(2)})^${years} = $${fv.toLocaleString()} / ${Math.pow(1 + rate/100, years).toFixed(4)} = $${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const pv = randomChoice([200000, 300000, 400000, 500000]);
+                        const rate = randomChoice([5, 6, 7, 8]);
+                        const years = 4;
+                        const fv = Math.round(pv * Math.pow(1 + rate/100, years));
+                        return {
+                            scenario: `An Arts District gallery property is worth $${pv.toLocaleString()} today. Property values in the area are appreciating at ${rate}% annually.`,
+                            propertyInfo: [
+                                { label: "Current Value", value: `$${pv.toLocaleString()}` },
+                                { label: "Appreciation", value: `${rate}% per year` },
+                                { label: "Time", value: `${years} years` }
+                            ],
+                            question: `What will the property be worth in ${years} years?`,
+                            type: "number",
+                            correctAnswer: fv,
+                            tolerance: 100,
+                            prefix: "$",
+                            explanation: `<strong>FV = PV × (1 + r)^n = $${pv.toLocaleString()} × (${(1 + rate/100).toFixed(2)})^${years} = $${fv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const fv = 1000000;
+                        const rate = randomChoice([8, 10, 12]);
+                        const years = randomChoice([5, 7, 10]);
+                        const pv = Math.round(fv / Math.pow(1 + rate/100, years));
+                        return {
+                            scenario: `Your goal is to have $1,000,000 for a property down payment in ${years} years. Your investments earn ${rate}% annually.`,
+                            propertyInfo: [
+                                { label: "Goal", value: "$1,000,000" },
+                                { label: "Time", value: `${years} years` },
+                                { label: "Return", value: `${rate}%` }
+                            ],
+                            question: `How much must you invest today to reach your goal?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 100,
+                            prefix: "$",
+                            explanation: `<strong>PV = FV / (1 + r)^n = $1,000,000 / (${(1 + rate/100).toFixed(2)})^${years} = $${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                }
+            ],
+            3: [ // Level 3: Effective vs Nominal Rates
+                {
+                    generate: () => {
+                        const apr = randomChoice([6, 9, 12, 18]);
+                        const m = 12; // monthly
+                        const ear = ((Math.pow(1 + apr/100/m, m) - 1) * 100).toFixed(2);
+                        const choices = [
+                            `${apr}.00%`,
+                            `${(parseFloat(ear) - 0.3).toFixed(2)}%`,
+                            `${ear}%`,
+                            `${(parseFloat(ear) + 0.25).toFixed(2)}%`
+                        ].sort(() => Math.random() - 0.5);
+                        const correctIndex = choices.indexOf(`${ear}%`);
+                        return {
+                            scenario: `A commercial mortgage lender in Hollywood quotes you an APR of ${apr}% with monthly compounding.`,
+                            propertyInfo: [
+                                { label: "Quoted APR", value: `${apr}%` },
+                                { label: "Compounding", value: "Monthly" }
+                            ],
+                            question: `What is the Effective Annual Rate (EAR)?`,
+                            type: "multiple-choice",
+                            choices: choices,
+                            correctAnswer: correctIndex,
+                            explanation: `<strong>EAR = (1 + APR/m)^m - 1</strong><br><br>EAR = (1 + ${apr/100}/12)^12 - 1 = (${(1 + apr/100/12).toFixed(6)})^12 - 1 = <strong>${ear}%</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const apr = randomChoice([8, 9.6, 10.8, 12]);
+                        const m = 4; // quarterly
+                        const ear = ((Math.pow(1 + apr/100/m, m) - 1) * 100).toFixed(2);
+                        return {
+                            scenario: `A Hollywood entertainment property investment offers ${apr}% APR compounded quarterly.`,
+                            propertyInfo: [
+                                { label: "APR", value: `${apr}%` },
+                                { label: "Compounding", value: "Quarterly" }
+                            ],
+                            question: `What is the Effective Annual Rate (EAR)? (Enter as percentage, e.g., 10.25)`,
+                            type: "number",
+                            correctAnswer: parseFloat(ear),
+                            tolerance: 0.05,
+                            suffix: "%",
+                            explanation: `<strong>EAR = (1 + APR/m)^m - 1</strong><br><br>EAR = (1 + ${apr/100}/4)^4 - 1 = <strong>${ear}%</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const monthly = randomChoice([0.5, 0.75, 1, 1.25, 1.5]);
+                        const apr = monthly * 12;
+                        return {
+                            scenario: `A bridge lender for a Hollywood redevelopment project charges ${monthly}% per month.`,
+                            propertyInfo: [
+                                { label: "Monthly Rate", value: `${monthly}%` },
+                                { label: "Compounding", value: "Monthly" }
+                            ],
+                            question: `What is the nominal APR?`,
+                            type: "number",
+                            correctAnswer: apr,
+                            tolerance: 0,
+                            suffix: "%",
+                            explanation: `Nominal APR = periodic rate × periods per year<br><br><strong>APR = ${monthly}% × 12 = ${apr}%</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const apr = randomChoice([6, 8, 10, 12]);
+                        const ear = ((Math.pow(1 + apr/100/12, 12) - 1) * 100).toFixed(3);
+                        const bey = (2 * (Math.pow(1 + parseFloat(ear)/100, 0.5) - 1) * 100).toFixed(2);
+                        return {
+                            scenario: `A REIT quotes mortgage-equivalent returns of ${apr}% (monthly compounding).`,
+                            propertyInfo: [
+                                { label: "Mortgage Equivalent", value: `${apr}%` },
+                                { label: "Original Compounding", value: "Monthly" }
+                            ],
+                            question: `What is the bond-equivalent yield (semi-annual compounding)?`,
+                            type: "number",
+                            correctAnswer: parseFloat(bey),
+                            tolerance: 0.05,
+                            suffix: "%",
+                            explanation: `Step 1: Find EAR from monthly: (1 + ${apr/100}/12)^12 - 1 = ${ear}%<br><br>Step 2: Convert to semi-annual: BEY = 2 × [(1 + EAR)^0.5 - 1] = <strong>${bey}%</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const ear = randomChoice([10, 12, 15, 18]);
+                        const m = 12;
+                        const apr = (m * (Math.pow(1 + ear/100, 1/m) - 1) * 100).toFixed(2);
+                        return {
+                            scenario: `You need to earn ${ear}% effective annual return on a Hollywood property investment. The bank compounds monthly.`,
+                            propertyInfo: [
+                                { label: "Target EAR", value: `${ear}%` },
+                                { label: "Compounding", value: "Monthly" }
+                            ],
+                            question: `What APR must the bank quote to achieve this EAR?`,
+                            type: "number",
+                            correctAnswer: parseFloat(apr),
+                            tolerance: 0.05,
+                            suffix: "%",
+                            explanation: `<strong>APR = m × [(1 + EAR)^(1/m) - 1]</strong><br><br>APR = 12 × [(1 + ${ear/100})^(1/12) - 1] = <strong>${apr}%</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const daily_rate = randomChoice([0.02, 0.025, 0.03]);
+                        const apr = (daily_rate * 365).toFixed(2);
+                        const ear = ((Math.pow(1 + daily_rate/100, 365) - 1) * 100).toFixed(2);
+                        const choices = generateChoices(parseFloat(ear), "%", 0.5);
+                        return {
+                            scenario: `A hard money lender charges ${daily_rate}% per day on a short-term Hollywood loan.`,
+                            propertyInfo: [
+                                { label: "Daily Rate", value: `${daily_rate}%` },
+                                { label: "APR", value: `${apr}%` }
+                            ],
+                            question: `What is the effective annual rate?`,
+                            type: "multiple-choice",
+                            choices: choices.options,
+                            correctAnswer: choices.correctIndex,
+                            explanation: `<strong>EAR = (1 + daily rate)^365 - 1</strong><br><br>EAR = (1 + ${daily_rate/100})^365 - 1 = <strong>${ear}%</strong>`
+                        };
+                    }
+                }
+            ],
+            4: [ // Level 4: Level Annuities
+                {
+                    generate: () => {
+                        const pmt = randomChoice([40000, 50000, 60000, 75000, 100000]);
+                        const n = randomChoice([3, 4, 5]);
+                        const r = randomChoice([5, 6, 7, 8]) / 100;
+                        const pvaf = (1 - Math.pow(1 + r, -n)) / r;
+                        const pv = Math.round(pmt * pvaf);
+                        return {
+                            scenario: `A Century City office building has a lease paying $${pmt.toLocaleString()} at the END of each year for ${n} years.`,
+                            propertyInfo: [
+                                { label: "Annual Payment", value: `$${pmt.toLocaleString()}` },
+                                { label: "Duration", value: `${n} years` },
+                                { label: "Timing", value: "End of year" },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the present value of this annuity in arrears?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 50,
+                            prefix: "$",
+                            explanation: `<strong>PV = PMT × [1 - (1+r)^(-n)] / r</strong><br><br>PV = $${pmt.toLocaleString()} × [1 - (${(1+r).toFixed(2)})^(-${n})] / ${r}<br>PV = $${pmt.toLocaleString()} × ${pvaf.toFixed(4)} = <strong>$${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const pmt = randomChoice([20000, 25000, 30000, 40000]);
+                        const n = randomChoice([4, 5, 6]);
+                        const r = randomChoice([6, 7, 8, 9]) / 100;
+                        const pvaf = (1 - Math.pow(1 + r, -n)) / r;
+                        const pvOrdinary = pmt * pvaf;
+                        const pvDue = Math.round(pvOrdinary * (1 + r));
+                        return {
+                            scenario: `A Century City ground lease requires $${pmt.toLocaleString()} at the BEGINNING of each year for ${n} years.`,
+                            propertyInfo: [
+                                { label: "Annual Payment", value: `$${pmt.toLocaleString()}` },
+                                { label: "Duration", value: `${n} years` },
+                                { label: "Timing", value: "Beginning of year" },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the present value of this annuity due?`,
+                            type: "number",
+                            correctAnswer: pvDue,
+                            tolerance: 50,
+                            prefix: "$",
+                            explanation: `Annuity Due = Ordinary Annuity × (1 + r)<br><br>Ordinary: $${pmt.toLocaleString()} × ${pvaf.toFixed(4)} = $${Math.round(pvOrdinary).toLocaleString()}<br><br><strong>Annuity Due = $${Math.round(pvOrdinary).toLocaleString()} × ${(1+r).toFixed(2)} = $${pvDue.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const loan = randomChoice([500000, 750000, 1000000, 1500000]);
+                        const n = randomChoice([10, 15, 20]);
+                        const r = randomChoice([5, 6, 7, 8]) / 100;
+                        const pmt = Math.round(loan * r / (1 - Math.pow(1 + r, -n)));
+                        return {
+                            scenario: `A $${(loan/1000000).toFixed(loan >= 1000000 ? 1 : 2)}M commercial mortgage in Century City needs to be fully amortized.`,
+                            propertyInfo: [
+                                { label: "Loan Amount", value: `$${loan.toLocaleString()}` },
+                                { label: "Term", value: `${n} years` },
+                                { label: "Interest Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the annual payment to fully amortize this loan?`,
+                            type: "number",
+                            correctAnswer: pmt,
+                            tolerance: 50,
+                            prefix: "$",
+                            explanation: `<strong>PMT = PV × r / [1 - (1+r)^(-n)]</strong><br><br>PMT = $${loan.toLocaleString()} × ${r} / [1 - (${(1+r).toFixed(2)})^(-${n})]<br>PMT = <strong>$${pmt.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const pmt = randomChoice([75000, 100000, 125000, 150000]);
+                        const n = randomChoice([15, 20, 25]);
+                        const r = randomChoice([7, 8, 9, 10]) / 100;
+                        const pvaf = (1 - Math.pow(1 + r, -n)) / r;
+                        const pv = Math.round(pmt * pvaf);
+                        const choices = generateChoices(pv, "$", 50000);
+                        return {
+                            scenario: `A long-term Century City lease pays $${pmt.toLocaleString()} annually for ${n} years (end of year).`,
+                            propertyInfo: [
+                                { label: "Annual Payment", value: `$${pmt.toLocaleString()}` },
+                                { label: "Duration", value: `${n} years` },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What lump sum today equals this stream of payments?`,
+                            type: "multiple-choice",
+                            choices: choices.options,
+                            correctAnswer: choices.correctIndex,
+                            explanation: `<strong>PV = PMT × [1 - (1+r)^(-n)] / r</strong><br><br>PV = $${pmt.toLocaleString()} × ${pvaf.toFixed(4)} = <strong>$${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const pv = randomChoice([300000, 400000, 500000, 600000]);
+                        const r = randomChoice([6, 7, 8]) / 100;
+                        const n = randomChoice([8, 10, 12]);
+                        const pmt = Math.round(pv * r / (1 - Math.pow(1 + r, -n)));
+                        return {
+                            scenario: `You want to receive level annual payments from a $${pv.toLocaleString()} investment over ${n} years.`,
+                            propertyInfo: [
+                                { label: "Investment", value: `$${pv.toLocaleString()}` },
+                                { label: "Duration", value: `${n} years` },
+                                { label: "Interest Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What annual payment can you withdraw (end of year)?`,
+                            type: "number",
+                            correctAnswer: pmt,
+                            tolerance: 50,
+                            prefix: "$",
+                            explanation: `<strong>PMT = PV × r / [1 - (1+r)^(-n)]</strong><br><br>PMT = $${pv.toLocaleString()} × ${r} / [1 - (${(1+r).toFixed(2)})^(-${n})] = <strong>$${pmt.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const pmt = randomChoice([50000, 60000, 75000, 80000]);
+                        const pv = randomChoice([400000, 500000, 600000]);
+                        const r = randomChoice([6, 7, 8]) / 100;
+                        // n = -ln(1 - PV*r/PMT) / ln(1+r)
+                        const n = Math.round(-Math.log(1 - pv * r / pmt) / Math.log(1 + r));
+                        return {
+                            scenario: `A Century City lease is worth $${pv.toLocaleString()} today with payments of $${pmt.toLocaleString()} per year at ${(r*100).toFixed(0)}%.`,
+                            propertyInfo: [
+                                { label: "Present Value", value: `$${pv.toLocaleString()}` },
+                                { label: "Annual Payment", value: `$${pmt.toLocaleString()}` },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `How many years does this lease run?`,
+                            type: "number",
+                            correctAnswer: n,
+                            tolerance: 0,
+                            suffix: " years",
+                            explanation: `Using n = -ln(1 - PV×r/PMT) / ln(1+r)<br><br>n = -ln(1 - $${pv.toLocaleString()}×${r}/$${pmt.toLocaleString()}) / ln(${(1+r).toFixed(2)})<br><br><strong>n = ${n} years</strong>`
+                        };
+                    }
+                }
+            ],
+            5: [ // Level 5: Growth Annuities & Perpetuities
+                {
+                    generate: () => {
+                        const noi1 = randomChoice([300000, 400000, 500000, 600000]);
+                        const g = randomChoice([2, 2.5, 3, 3.5]) / 100;
+                        const r = randomChoice([8, 9, 10, 11]) / 100;
+                        const value = Math.round(noi1 / (r - g));
+                        return {
+                            scenario: `A Santa Monica beachfront property generates $${noi1.toLocaleString()} NOI in Year 1, growing at ${(g*100).toFixed(1)}% forever.`,
+                            propertyInfo: [
+                                { label: "Year 1 NOI", value: `$${noi1.toLocaleString()}` },
+                                { label: "Growth Rate", value: `${(g*100).toFixed(1)}%` },
+                                { label: "Required Return", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `Using the Gordon Growth Model, what is the property value?`,
+                            type: "number",
+                            correctAnswer: value,
+                            tolerance: 5000,
+                            prefix: "$",
+                            explanation: `<strong>Value = NOI₁ / (r - g)</strong><br><br>Value = $${noi1.toLocaleString()} / (${(r*100).toFixed(0)}% - ${(g*100).toFixed(1)}%)<br>Value = $${noi1.toLocaleString()} / ${((r-g)*100).toFixed(1)}% = <strong>$${value.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const cf = randomChoice([50000, 75000, 100000, 150000]);
+                        const r = randomChoice([4, 5, 6, 8]) / 100;
+                        const pv = Math.round(cf / r);
+                        return {
+                            scenario: `A Santa Monica ground lease pays $${cf.toLocaleString()} per year forever with no growth.`,
+                            propertyInfo: [
+                                { label: "Annual Payment", value: `$${cf.toLocaleString()}` },
+                                { label: "Duration", value: "Perpetual" },
+                                { label: "Required Return", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the present value of this level perpetuity?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 0,
+                            prefix: "$",
+                            explanation: `<strong>PV = CF / r</strong><br><br>PV = $${cf.toLocaleString()} / ${(r*100).toFixed(0)}% = <strong>$${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const cf1 = randomChoice([50000, 60000, 75000, 80000]);
+                        const g = randomChoice([2, 2.5, 3]) / 100;
+                        const r = randomChoice([6, 7, 8]) / 100;
+                        const n = randomChoice([5, 7, 10]);
+                        const factor = (1 - Math.pow((1+g)/(1+r), n)) / (r - g);
+                        const pv = Math.round(cf1 * factor);
+                        return {
+                            scenario: `A Santa Monica retail lease pays $${cf1.toLocaleString()} in Year 1, growing ${(g*100).toFixed(0)}% annually for ${n} years.`,
+                            propertyInfo: [
+                                { label: "Year 1 Payment", value: `$${cf1.toLocaleString()}` },
+                                { label: "Growth", value: `${(g*100).toFixed(0)}%` },
+                                { label: "Duration", value: `${n} years` },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the present value of this growing annuity?`,
+                            type: "number",
+                            correctAnswer: pv,
+                            tolerance: 500,
+                            prefix: "$",
+                            explanation: `<strong>PV = CF₁ × [1 - ((1+g)/(1+r))^n] / (r - g)</strong><br><br>PV = $${cf1.toLocaleString()} × ${factor.toFixed(4)} = <strong>$${pv.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const noi0 = randomChoice([400000, 500000, 600000, 750000]);
+                        const g = randomChoice([3, 4, 5]) / 100;
+                        const noi1 = Math.round(noi0 * (1 + g));
+                        return {
+                            scenario: `A Santa Monica hotel currently generates $${noi0.toLocaleString()} NOI with expected ${(g*100).toFixed(0)}% growth.`,
+                            propertyInfo: [
+                                { label: "Current NOI", value: `$${noi0.toLocaleString()}` },
+                                { label: "Growth Rate", value: `${(g*100).toFixed(0)}%` }
+                            ],
+                            question: `What will Year 1 NOI be (the numerator for Gordon Growth)?`,
+                            type: "number",
+                            correctAnswer: noi1,
+                            tolerance: 0,
+                            prefix: "$",
+                            explanation: `<strong>NOI₁ = NOI₀ × (1 + g)</strong><br><br>NOI₁ = $${noi0.toLocaleString()} × ${(1+g).toFixed(2)} = <strong>$${noi1.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const value = randomChoice([5000000, 7500000, 10000000]);
+                        const r = randomChoice([8, 9, 10]) / 100;
+                        const g = randomChoice([2, 2.5, 3]) / 100;
+                        const noi1 = Math.round(value * (r - g));
+                        const choices = generateChoices(noi1, "$", 25000);
+                        return {
+                            scenario: `A Santa Monica property is valued at $${(value/1000000).toFixed(1)}M using a ${(r*100).toFixed(0)}% required return and ${(g*100).toFixed(1)}% growth.`,
+                            propertyInfo: [
+                                { label: "Property Value", value: `$${(value/1000000).toFixed(1)}M` },
+                                { label: "Required Return", value: `${(r*100).toFixed(0)}%` },
+                                { label: "Growth Rate", value: `${(g*100).toFixed(1)}%` }
+                            ],
+                            question: `What is the implied Year 1 NOI?`,
+                            type: "multiple-choice",
+                            choices: choices.options,
+                            correctAnswer: choices.correctIndex,
+                            explanation: `From V = NOI₁/(r-g), solve for NOI₁:<br><br><strong>NOI₁ = V × (r - g) = $${(value/1000000).toFixed(1)}M × ${((r-g)*100).toFixed(1)}% = $${noi1.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const cf = randomChoice([100000, 150000, 200000]);
+                        const r = randomChoice([5, 6, 8]) / 100;
+                        const g = randomChoice([2, 2.5, 3]) / 100;
+                        const pvLevel = Math.round(cf / r);
+                        const pvGrowing = Math.round(cf / (r - g));
+                        const diff = pvGrowing - pvLevel;
+                        return {
+                            scenario: `Compare two Santa Monica properties: both pay $${cf.toLocaleString()}/year, but one grows at ${(g*100).toFixed(0)}%.`,
+                            propertyInfo: [
+                                { label: "Annual CF", value: `$${cf.toLocaleString()}` },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` },
+                                { label: "Growth (Property B)", value: `${(g*100).toFixed(0)}%` }
+                            ],
+                            question: `How much more is the growing perpetuity worth?`,
+                            type: "number",
+                            correctAnswer: diff,
+                            tolerance: 1000,
+                            prefix: "$",
+                            explanation: `Level: $${cf.toLocaleString()} / ${(r*100).toFixed(0)}% = $${pvLevel.toLocaleString()}<br><br>Growing: $${cf.toLocaleString()} / (${(r*100).toFixed(0)}% - ${(g*100).toFixed(0)}%) = $${pvGrowing.toLocaleString()}<br><br><strong>Difference = $${diff.toLocaleString()}</strong>`
+                        };
+                    }
+                }
+            ],
+            6: [ // Level 6: DCF & IRR Analysis
+                {
+                    generate: () => {
+                        const noi1 = randomChoice([80000, 100000, 120000, 150000]);
+                        const g = randomChoice([2, 3, 4]) / 100;
+                        const years = 5;
+                        const noi6 = Math.round(noi1 * Math.pow(1 + g, years));
+                        return {
+                            scenario: `A Beverly Hills property generates $${noi1.toLocaleString()} NOI in Year 1, growing ${(g*100).toFixed(0)}% annually. You'll sell after 5 years.`,
+                            propertyInfo: [
+                                { label: "Year 1 NOI", value: `$${noi1.toLocaleString()}` },
+                                { label: "Growth", value: `${(g*100).toFixed(0)}%` },
+                                { label: "Hold Period", value: "5 years" }
+                            ],
+                            question: `What is Year 6 NOI (used to determine exit price)?`,
+                            type: "number",
+                            correctAnswer: noi6,
+                            tolerance: 50,
+                            prefix: "$",
+                            explanation: `<strong>NOI₆ = NOI₁ × (1 + g)^5</strong><br><br>NOI₆ = $${noi1.toLocaleString()} × (${(1+g).toFixed(2)})^5 = $${noi1.toLocaleString()} × ${Math.pow(1+g, 5).toFixed(4)} = <strong>$${noi6.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const noi6 = randomChoice([90000, 100000, 120000, 150000]);
+                        const cap = randomChoice([4, 5, 6]) / 100;
+                        const sale = Math.round(noi6 / cap);
+                        return {
+                            scenario: `A Beverly Hills property has projected Year 6 NOI of $${noi6.toLocaleString()}. Exit cap rate is ${(cap*100).toFixed(0)}%.`,
+                            propertyInfo: [
+                                { label: "Year 6 NOI", value: `$${noi6.toLocaleString()}` },
+                                { label: "Exit Cap Rate", value: `${(cap*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the projected sale price at end of Year 5?`,
+                            type: "number",
+                            correctAnswer: sale,
+                            tolerance: 100,
+                            prefix: "$",
+                            explanation: `<strong>Sale Price = NOI₆ / Cap Rate</strong><br><br>Sale = $${noi6.toLocaleString()} / ${(cap*100).toFixed(0)}% = <strong>$${sale.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const invest = randomChoice([400000, 500000, 600000, 750000]);
+                        const cf = randomChoice([75000, 80000, 90000, 100000]);
+                        const n = 6;
+                        // IRR where invest = cf * PVAF
+                        // Approximate IRR
+                        const pvaf = invest / cf;
+                        // IRR is approximately where PVAF(r,n) = pvaf
+                        let irr = 5;
+                        for (let r = 1; r <= 20; r += 0.5) {
+                            const testPvaf = (1 - Math.pow(1 + r/100, -n)) / (r/100);
+                            if (testPvaf < pvaf) {
+                                irr = r - 0.5;
+                                break;
+                            }
+                        }
+                        const choices = [`${(irr-2).toFixed(1)}%`, `${(irr).toFixed(1)}%`, `${(irr+2).toFixed(1)}%`, `${(irr+4).toFixed(1)}%`];
+                        return {
+                            scenario: `An investment requires $${invest.toLocaleString()} today and returns $${cf.toLocaleString()} annually for ${n} years.`,
+                            propertyInfo: [
+                                { label: "Investment", value: `$${invest.toLocaleString()}` },
+                                { label: "Annual CF", value: `$${cf.toLocaleString()}` },
+                                { label: "Duration", value: `${n} years` }
+                            ],
+                            question: `The IRR is closest to:`,
+                            type: "multiple-choice",
+                            choices: choices,
+                            correctAnswer: 1,
+                            explanation: `IRR is the rate where NPV = 0:<br><br>$${invest.toLocaleString()} = $${cf.toLocaleString()} × PVAF(IRR, ${n})<br><br>By trial: <strong>IRR ≈ ${irr.toFixed(1)}%</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const cost = randomChoice([1500000, 2000000, 2500000]);
+                        const construction = 2;
+                        const cf = randomChoice([200000, 250000, 300000]);
+                        const opYears = 10;
+                        const r = randomChoice([8, 10, 12]) / 100;
+                        const pvaf = (1 - Math.pow(1 + r, -opYears)) / r;
+                        const pvAtYear2 = cf * pvaf;
+                        const pvToday = Math.round(pvAtYear2 / Math.pow(1 + r, construction));
+                        return {
+                            scenario: `A Beverly Hills development costs $${(cost/1000000).toFixed(1)}M today. After ${construction} years construction, it generates $${cf.toLocaleString()}/year for ${opYears} years.`,
+                            propertyInfo: [
+                                { label: "Cost", value: `$${(cost/1000000).toFixed(1)}M` },
+                                { label: "Construction", value: `${construction} years` },
+                                { label: "Operating CF", value: `$${cf.toLocaleString()}/yr` },
+                                { label: "Discount Rate", value: `${(r*100).toFixed(0)}%` }
+                            ],
+                            question: `What is the PV of the ${opYears}-year operating income?`,
+                            type: "number",
+                            correctAnswer: pvToday,
+                            tolerance: 5000,
+                            prefix: "$",
+                            explanation: `Step 1: PV at Year ${construction} = $${cf.toLocaleString()} × ${pvaf.toFixed(4)} = $${Math.round(pvAtYear2).toLocaleString()}<br><br>Step 2: Discount to today:<br><strong>PV₀ = $${Math.round(pvAtYear2).toLocaleString()} / (${(1+r).toFixed(2)})^${construction} = $${pvToday.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const price = randomChoice([2000000, 2500000, 3000000]);
+                        const noi1 = randomChoice([150000, 180000, 200000]);
+                        const g = 3 / 100;
+                        const exitCap = randomChoice([5, 5.5, 6]) / 100;
+                        const holdYears = 5;
+                        const noi6 = noi1 * Math.pow(1 + g, holdYears);
+                        const salePrice = Math.round(noi6 / exitCap);
+                        return {
+                            scenario: `Purchase a Beverly Hills property for $${(price/1000000).toFixed(1)}M with $${noi1.toLocaleString()} Year 1 NOI growing 3%. Sell in 5 years at ${(exitCap*100).toFixed(1)}% cap.`,
+                            propertyInfo: [
+                                { label: "Purchase", value: `$${(price/1000000).toFixed(1)}M` },
+                                { label: "Year 1 NOI", value: `$${noi1.toLocaleString()}` },
+                                { label: "Growth", value: "3%" },
+                                { label: "Exit Cap", value: `${(exitCap*100).toFixed(1)}%` }
+                            ],
+                            question: `What is the projected sale price?`,
+                            type: "number",
+                            correctAnswer: salePrice,
+                            tolerance: 1000,
+                            prefix: "$",
+                            explanation: `NOI₆ = $${noi1.toLocaleString()} × (1.03)^5 = $${Math.round(noi6).toLocaleString()}<br><br><strong>Sale = $${Math.round(noi6).toLocaleString()} / ${(exitCap*100).toFixed(1)}% = $${salePrice.toLocaleString()}</strong>`
+                        };
+                    }
+                },
+                {
+                    generate: () => {
+                        const noi1 = randomChoice([100000, 120000, 150000]);
+                        const r = randomChoice([9, 10, 11]) / 100;
+                        const g = randomChoice([2, 2.5, 3]) / 100;
+                        const value = Math.round(noi1 / (r - g));
+                        const goingInCap = ((noi1 / value) * 100).toFixed(2);
+                        return {
+                            scenario: `A Beverly Hills property with $${noi1.toLocaleString()} Year 1 NOI is valued using ${(r*100).toFixed(0)}% required return and ${(g*100).toFixed(1)}% growth.`,
+                            propertyInfo: [
+                                { label: "Year 1 NOI", value: `$${noi1.toLocaleString()}` },
+                                { label: "Required Return", value: `${(r*100).toFixed(0)}%` },
+                                { label: "Growth", value: `${(g*100).toFixed(1)}%` }
+                            ],
+                            question: `What is the implied going-in cap rate? (NOI₁/Value)`,
+                            type: "number",
+                            correctAnswer: parseFloat(goingInCap),
+                            tolerance: 0.05,
+                            suffix: "%",
+                            explanation: `Value = $${noi1.toLocaleString()} / (${(r*100).toFixed(0)}% - ${(g*100).toFixed(1)}%) = $${value.toLocaleString()}<br><br><strong>Cap Rate = $${noi1.toLocaleString()} / $${value.toLocaleString()} = ${goingInCap}%</strong><br><br>Note: Going-in cap rate = r - g in the Gordon model.`
+                        };
+                    }
+                }
+            ]
+        };
+
+        // Helper functions
+        function randomChoice(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function shuffleArray(arr) {
+            const newArr = [...arr];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+        function generateChoices(correctValue, prefix = "", variance = null) {
+            const v = variance || Math.abs(correctValue * 0.1);
+            let choices = [
+                correctValue,
+                Math.round(correctValue - v * 1.5),
+                Math.round(correctValue + v),
+                Math.round(correctValue - v * 0.5)
+            ];
+
+            // Format choices
+            if (prefix === "$") {
+                choices = choices.map(c => `$${c.toLocaleString()}`);
+            } else if (prefix === "%") {
+                choices = choices.map(c => `${c.toFixed(2)}%`);
+            } else {
+                choices = choices.map(c => c.toLocaleString());
+            }
+
+            // Shuffle and find correct index
+            const correctFormatted = prefix === "$" ? `$${correctValue.toLocaleString()}` :
+                                     prefix === "%" ? `${correctValue.toFixed(2)}%` :
+                                     correctValue.toLocaleString();
+            const shuffled = shuffleArray(choices);
+            const correctIndex = shuffled.indexOf(correctFormatted);
+
+            return { options: shuffled, correctIndex };
+        }
+
+        function generateLevelQuestions(level) {
+            const templates = questionTemplates[level];
+            const shuffled = shuffleArray(templates);
+            const selected = shuffled.slice(0, 4); // 4 questions per level
+            return selected.map(t => t.generate());
+        }
+
+        // Game functions
+        function startGame() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameMap').style.display = 'block';
+            document.getElementById('questionArea').style.display = 'block';
+            document.getElementById('statsBar').style.display = 'flex';
+
+            gameState.currentLevelQuestions = generateLevelQuestions(1);
+            loadQuestion();
+            updateMap();
+        }
+
+        function loadQuestion() {
+            const level = gameState.currentLevel;
+            const qIndex = gameState.currentQuestion;
+
+            if (qIndex >= gameState.currentLevelQuestions.length) {
+                levelComplete();
+                return;
+            }
+
+            const q = gameState.currentLevelQuestions[qIndex];
+            const levelInfo = levels[level - 1];
+
+            document.getElementById('levelIcon').textContent = levelInfo.icon;
+            document.getElementById('levelName').textContent = levelInfo.name;
+            document.getElementById('questionCounter').textContent = `Question ${qIndex + 1} of ${gameState.currentLevelQuestions.length}`;
+            document.getElementById('scenarioText').textContent = q.scenario;
+
+            document.getElementById('propertyInfo').innerHTML = q.propertyInfo.map(info => `
+                <div class="property-stat">
+                    <div class="property-stat-value">${info.value}</div>
+                    <div class="property-stat-label">${info.label}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('questionText').textContent = q.question;
+            buildAnswerSection(q);
+
+            document.getElementById('feedbackSection').style.display = 'none';
+            document.getElementById('submitBtn').disabled = false;
+
+            document.querySelector('.question-card').style.animation = 'none';
+            setTimeout(() => {
+                document.querySelector('.question-card').style.animation = 'slideIn 0.5s ease-out';
+            }, 10);
+
+            // Analytics: Start timing this question
+            logQuestionStart();
+        }
+
+        function buildAnswerSection(q) {
+            const section = document.getElementById('answerSection');
+
+            if (q.type === 'multiple-choice') {
+                section.innerHTML = `
+                    <div class="choices-grid">
+                        ${q.choices.map((choice, i) => `
+                            <button class="choice-btn" data-index="${i}" onclick="selectChoice(${i})">
+                                <span class="choice-letter">${String.fromCharCode(65 + i)}</span>
+                                ${choice}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (q.type === 'number') {
+                const prefix = q.prefix || '';
+                const suffix = q.suffix || '';
+                section.innerHTML = `
+                    <div class="number-input-container">
+                        ${prefix ? `<span class="input-prefix">${prefix}</span>` : ''}
+                        <input type="number" class="number-input" id="numberAnswer" placeholder="Enter your answer..." step="0.01">
+                        ${suffix ? `<span class="input-suffix">${suffix}</span>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        let selectedChoice = null;
+        function selectChoice(index) {
+            document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.choice-btn')[index].classList.add('selected');
+            selectedChoice = index;
+        }
+
+        function submitAnswer() {
+            const q = gameState.currentLevelQuestions[gameState.currentQuestion];
+            let isCorrect = false;
+            let userAnswer = null;
+
+            if (q.type === 'multiple-choice') {
+                if (selectedChoice === null) {
+                    alert('Please select an answer.');
+                    return;
+                }
+                isCorrect = selectedChoice === q.correctAnswer;
+                userAnswer = q.choices[selectedChoice];
+
+                document.querySelectorAll('.choice-btn').forEach((btn, i) => {
+                    btn.classList.add('disabled');
+                    if (i === q.correctAnswer) btn.classList.add('correct');
+                    else if (i === selectedChoice && !isCorrect) btn.classList.add('incorrect');
+                });
+            } else if (q.type === 'number') {
+                userAnswer = parseFloat(document.getElementById('numberAnswer').value);
+                if (isNaN(userAnswer)) {
+                    alert('Please enter a number.');
+                    return;
+                }
+                isCorrect = Math.abs(userAnswer - q.correctAnswer) <= q.tolerance;
+            }
+
+            gameState.totalQuestions++;
+            if (isCorrect) {
+                gameState.correctAnswers++;
+                gameState.levelCorrect++;
+                gameState.streak++;
+                gameState.score += 100 + (gameState.streak * 10);
+            } else {
+                gameState.streak = 0;
+            }
+
+            // Analytics: Log the answer
+            const correctAnswerDisplay = q.type === 'multiple-choice'
+                ? q.choices[q.correctAnswer]
+                : q.correctAnswer;
+            logQuestionAnswer(q, userAnswer, correctAnswerDisplay, isCorrect, gameState.currentLevel);
+
+            document.getElementById('scoreValue').textContent = gameState.score;
+            document.getElementById('streakValue').textContent = gameState.streak;
+
+            showFeedback(isCorrect, q);
+            document.getElementById('submitBtn').disabled = true;
+            selectedChoice = null;
+        }
+
+        function showFeedback(isCorrect, q) {
+            const feedback = document.getElementById('feedbackSection');
+            feedback.style.display = 'block';
+            feedback.className = 'feedback-section ' + (isCorrect ? 'correct' : 'incorrect');
+            document.getElementById('feedbackIcon').textContent = isCorrect ? '✓' : '✗';
+            document.getElementById('feedbackTitle').textContent = isCorrect ? 'CORRECT' : 'INCORRECT';
+            document.getElementById('feedbackExplanation').innerHTML = q.explanation;
+        }
+
+        function nextQuestion() {
+            gameState.currentQuestion++;
+            loadQuestion();
+        }
+
+        function levelComplete() {
+            const level = gameState.currentLevel;
+            const levelCorrectCount = gameState.levelCorrect;
+            const levelTotalCount = gameState.currentLevelQuestions.length;
+
+            gameState.levelsCompleted.push(level);
+
+            // Analytics: Log level completion
+            logLevelComplete(level, levelCorrectCount, levelTotalCount);
+
+            document.getElementById('modalTitle').textContent = level === 6 ? 'LA CONQUERED' : 'LEVEL COMPLETE';
+            document.getElementById('modalSubtitle').textContent = level === 6
+                ? 'You\'ve mastered the time value of money across all of Los Angeles!'
+                : `You've conquered ${levels[level - 1].location}. Ready for the next neighborhood?`;
+            document.getElementById('modalCorrect').textContent = `${levelCorrectCount}/${levelTotalCount}`;
+            document.getElementById('modalPoints').textContent = `+${levelCorrectCount * 100}`;
+
+            if (level === 6) {
+                // Analytics: Log game completion
+                logGameComplete();
+
+                document.getElementById('gameCompleteModal').style.display = 'flex';
+                document.getElementById('finalScore').textContent = gameState.score;
+                document.getElementById('finalAccuracy').textContent = Math.round((gameState.correctAnswers / gameState.totalQuestions) * 100) + '%';
+                createConfetti();
+            } else {
+                document.getElementById('levelCompleteModal').style.display = 'flex';
+            }
+
+            gameState.levelCorrect = 0;
+            updateMap();
+        }
+
+        function continueToNextLevel() {
+            document.getElementById('levelCompleteModal').style.display = 'none';
+            gameState.currentLevel++;
+            gameState.currentQuestion = 0;
+            gameState.currentLevelQuestions = generateLevelQuestions(gameState.currentLevel);
+            updateMap();
+            loadQuestion();
+        }
+
+        function updateMap() {
+            const currentLevel = gameState.currentLevel;
+            const totalLevels = 6;
+            const progress = ((currentLevel - 1) / totalLevels) * 100;
+
+            document.getElementById('trackProgress').style.width = `${progress}%`;
+            document.getElementById('progressFill').style.width = `${(currentLevel / totalLevels) * 100}%`;
+            document.getElementById('progressText').textContent = `Level ${currentLevel} of ${totalLevels}`;
+
+            for (let i = 1; i <= totalLevels; i++) {
+                const node = document.getElementById(`level${i}`);
+                node.className = 'level-node';
+
+                if (gameState.levelsCompleted.includes(i)) {
+                    node.classList.add('completed');
+                    node.innerHTML = `<span class="level-icon">✓</span><span class="level-name">${levels[i-1].location}</span>`;
+                } else if (i === currentLevel) {
+                    node.classList.add('current');
+                    node.innerHTML = `<span class="level-icon">${levels[i-1].icon}</span><span class="level-name">${levels[i-1].location}</span>`;
+                } else {
+                    node.classList.add('locked');
+                    node.innerHTML = `<span class="level-number">${i}</span><span class="level-name">${levels[i-1].location}</span>`;
+                }
+            }
+        }
+
+        function selectLevel(level) {
+            if (level <= gameState.currentLevel || gameState.levelsCompleted.includes(level)) {
+                gameState.currentLevel = level;
+                gameState.currentQuestion = 0;
+                gameState.levelCorrect = 0;
+                gameState.currentLevelQuestions = generateLevelQuestions(level);
+                updateMap();
+                loadQuestion();
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('gameCompleteModal').style.display = 'none';
+            gameState = {
+                currentLevel: 1,
+                currentQuestion: 0,
+                score: 0,
+                streak: 0,
+                correctAnswers: 0,
+                totalQuestions: 0,
+                levelCorrect: 0,
+                levelsCompleted: [],
+                currentLevelQuestions: []
+            };
+            document.getElementById('scoreValue').textContent = '0';
+            document.getElementById('streakValue').textContent = '0';
+            gameState.currentLevelQuestions = generateLevelQuestions(1);
+            updateMap();
+            loadQuestion();
+        }
+
+        function createConfetti() {
+            const colors = ['#990000', '#FFCC00', '#FFE066', '#6B0000', '#ffffff'];
+            const container = document.createElement('div');
+            container.className = 'confetti';
+            document.body.appendChild(container);
+
+            for (let i = 0; i < 100; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDelay = Math.random() * 2 + 's';
+                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                container.appendChild(piece);
+            }
+
+            setTimeout(() => container.remove(), 5000);
+        }
+    </script>
+</body>
+</html>
